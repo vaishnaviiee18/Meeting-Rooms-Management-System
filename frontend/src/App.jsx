@@ -1,27 +1,30 @@
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { BrowserRouter as Router } from "react-router-dom";
 import { useState } from "react";
-import Home from "./pages/Home";
-import Requests from "./pages/Requests";
-import Login from "./pages/Login";
-import Signup from "./pages/Signup";
-import AboutUs from "./pages/AboutUs";
 import Navbar from "./components/Navbar";
-import Rooms from "./pages/Rooms";
+import AdminNavbar from "./components/AdminNavbar";
+import AdminRoutes from "./routes/AdminRoutes";
+import UserRoutes from "./routes/UserRoutes";
+
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [userRole, setUserRole] = useState(""); // "admin" or "clubRep"
 
   return (
     <Router>
-      <Navbar isLoggedIn={isLoggedIn} setIsLoggedIn={setIsLoggedIn} />
+      {/* Show different navbar based on user role */}
+      {userRole === "admin" ? (
+        <AdminNavbar />
+      ) : (
+        <Navbar isLoggedIn={isLoggedIn} setIsLoggedIn={setIsLoggedIn} />
+      )}
+
       <div className="p-6 min-h-screen bg-gray-50">
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/requests" element={<Requests />} />
-          <Route path="/login" element={<Login setIsLoggedIn={setIsLoggedIn} />} />
-          <Route path="/signup" element={<Signup />} />
-          <Route path="/about" element={<AboutUs />} />
-          <Route path="/rooms" element={<Rooms />} />
-        </Routes>
+        {/* Render routes based on user role */}
+        {userRole === "admin" && isLoggedIn ? (
+          <AdminRoutes />
+        ) : (
+          <UserRoutes setIsLoggedIn={setIsLoggedIn} setUserRole={setUserRole} />
+        )}
       </div>
     </Router>
   );
