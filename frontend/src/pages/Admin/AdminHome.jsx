@@ -8,7 +8,7 @@ const AdminHome = () => {
   useEffect(() => {
     const fetchRequests = async () => {
       try {
-        const response = await fetch("/api/requests");
+        const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/requests`);
         if (!response.ok) throw new Error("Failed to fetch requests");
 
         const data = await response.json();
@@ -32,7 +32,7 @@ const AdminHome = () => {
     return pendingRequests
       .filter((req) => new Date(req.date) >= today)
       .sort((a, b) => new Date(a.date) - new Date(b.date))
-      .slice(0, 5); // Show top 5 urgent requests
+      .slice(0, 5);
   };
 
   return (
@@ -41,8 +41,7 @@ const AdminHome = () => {
 
       {/* Stats Cards */}
       <div className="flex flex-wrap justify-center gap-6 mb-8">
-        {[
-          { title: "Total Requests", count: requests.length, color: "bg-blue-500" },
+        {[{ title: "Total Requests", count: requests.length, color: "bg-blue-500" },
           { title: "Pending Requests", count: pendingRequests.length, color: "bg-yellow-500" },
           { title: "Processed Requests", count: processedRequests.length, color: "bg-green-500" }
         ].map((item, index) => (

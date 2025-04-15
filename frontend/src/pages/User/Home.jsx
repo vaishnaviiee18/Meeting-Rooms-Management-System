@@ -5,14 +5,14 @@ const Home = () => {
   const [places, setPlaces] = useState([]);
 
   useEffect(() => {
-    fetch("http://localhost:8080/api/requests/latest") // Fetch latest 8 bookings
+    fetch("http://localhost:8080/api/requests/frequently-booked") // Fetch frequently booked places
       .then((res) => res.json())
       .then((data) => {
         // Transform data into required format (adding image URLs based on room names)
         const transformedData = data.map((place) => ({
           id: place.id,
-          name: place.name,
-          img: getImageForPlace(place.name),
+          name: place.roomName, // Assuming roomName is in the request object
+          img: getImageForPlace(place.roomName),
         }));
         setPlaces(transformedData);
       })

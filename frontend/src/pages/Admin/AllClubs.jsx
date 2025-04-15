@@ -9,7 +9,7 @@ const AllClubs = () => {
   useEffect(() => {
     const fetchClubs = async () => {
       try {
-        const response = await fetch("/api/clubs");
+        const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/clubs`);
         if (!response.ok) throw new Error("Failed to fetch clubs");
         const data = await response.json();
         setClubs(data);
@@ -25,10 +25,10 @@ const AllClubs = () => {
   const addClub = async () => {
     if (!newClub.trim()) return;
 
-    const response = await fetch("/api/clubs", {
+    const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/clubs`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name: newClub, logo: "/assets/club-default.png" }), // Default logo
+      body: JSON.stringify({ name: newClub, logo: "/assets/club-default.png" }),
     });
 
     if (response.ok) {
@@ -39,7 +39,7 @@ const AllClubs = () => {
   };
 
   const deleteClub = async (clubId) => {
-    await fetch(`/api/clubs/${clubId}`, { method: "DELETE" });
+    await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/clubs/${clubId}`, { method: "DELETE" });
     setClubs(clubs.filter((club) => club.id !== clubId));
   };
 
@@ -63,7 +63,6 @@ const AllClubs = () => {
         </button>
       </div>
 
-      {/* Error & Loading Handling */}
       {loading && <p className="text-center text-gray-600">Loading clubs...</p>}
       {error && <p className="text-center text-red-500">{error}</p>}
 

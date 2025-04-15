@@ -7,7 +7,7 @@ const AllRequests = () => {
   useEffect(() => {
     const fetchRequests = async () => {
       try {
-        const response = await fetch("/api/requests");
+        const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/requests`);
         if (!response.ok) throw new Error("Failed to fetch requests");
 
         const data = await response.json();
