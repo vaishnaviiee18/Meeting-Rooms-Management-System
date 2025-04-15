@@ -1,17 +1,25 @@
 package com.example.meetingrooms.controller;
 
-import com.example.meetingrooms.model.Request;
-import com.example.meetingrooms.model.RequestStatus;
-import com.example.meetingrooms.service.RequestService;
-import com.example.meetingrooms.service.UserService;
+import java.util.List;
+import java.util.Optional;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
-import java.util.List;
-import java.util.Optional;
+import com.example.meetingrooms.model.Request;
+import com.example.meetingrooms.model.RequestStatus;
+import com.example.meetingrooms.service.RequestService;
 
 @RestController
 @RequestMapping("/api/requests")
@@ -21,8 +29,6 @@ public class RequestController {
     @Autowired
     private RequestService requestService;
 
-    @Autowired
-    private UserService userService;
 
     // Fetch all requests
     @GetMapping
@@ -81,7 +87,7 @@ public class RequestController {
         String currentUsername = authentication.getName(); // Assuming the username is the representative's email or ID
 
         // Check if the current user is the representative of the club
-        if (!currentUsername.equals(request.getUser().getEmail())) {
+        if (!currentUsername.equals(request.getUser())) {
             return ResponseEntity.status(403).body("You are not authorized to generate a letter for this request.");
         }
 
@@ -94,8 +100,8 @@ public class RequestController {
         // Example of the letter content, this can be styled and formatted according to your requirements
         return "<h2>Room Booking Confirmation</h2>" +
                 "<p>The room <strong>" + request.getRoomName() + "</strong> is assigned to the <strong>" +
-                request.getUser().getClub() + "</strong> for the time slot <strong>" +
-                request.getTimeSlot() + "</strong> on <strong>" + request.getDate() + "</strong>.</p>" +
+                request.getUser() + "</strong> for the time slot <strong>" +
+                request.getTimeSlot() + "</strong> on <strong>" + request.getBookingDate() + "</strong>.</p>" +
                 "<p>Thank you for using our booking system.</p>";
     }
 }
