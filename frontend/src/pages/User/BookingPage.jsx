@@ -1,8 +1,6 @@
 import { useLocation } from "react-router-dom";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "../../context/AuthContext";
-
-
 
 const BookingPage = () => {
   const location = useLocation();
@@ -12,26 +10,32 @@ const BookingPage = () => {
   const [date, setDate] = useState("");
   const [purpose, setPurpose] = useState("");
   const [selectedTime, setSelectedTime] = useState("");
+  const [bookedSlots, setBookedSlots] = useState([]);
 
   const timeSlots = ["9:00 - 11:00", "11:00 - 13:00", "13:00 - 15:00", "15:00 - 17:00"];
 
-  const isBooked = (slot) => false; // Replace with dynamic logic if available
+  useEffect(() => {
+    if (date && room?.name) {
+      fetch(`http://localhost:8080/api/requests/room/${room.name}/date/${date}`)
+        .then((res) => {
+          if (!res.ok) throw new Error("Failed to fetch bookings");
+          return res.json();
+        })
+        .then((data) => {
+          const booked = data.map((req) => req.timeSlot);
+          setBookedSlots(booked);
+        })
+        .catch((err) => console.error(err));
+    }
+  }, [date, room]);
 
-  if (!user) {
-    return (
-      <div className="text-center text-red-500 text-xl font-semibold mt-10">
-        Please log in to request a room.
-      </div>
-    );
-  }
+  const isBooked = (slot) => bookedSlots.includes(slot);
 
-  if (!room) {
-    return (
-      <div className="text-center text-red-500 text-xl font-bold">
-        Error: No room selected for booking.
-      </div>
-    );
-  }
+  const isPastDate = (selectedDate) => {
+    const today = new Date();
+    const selected = new Date(selectedDate);
+    return selected < today.setHours(0, 0, 0, 0);
+  };
 
   const handleBooking = () => {
     if (!date || !purpose || !selectedTime) {
@@ -39,11 +43,18 @@ const BookingPage = () => {
       return;
     }
 
+    if (isPastDate(date)) {
+      alert("You cannot book for a past date.");
+      return;
+    }
+
     const bookingRequest = {
-      clubName: user.clubName || user.name,
       roomName: room.name,
-      date: `${date} - ${selectedTime}`,
-      status: "pending",
+      bookingDate: date,
+      timeSlot: selectedTime,
+      purpose,
+      status: "PENDING",
+      clubName: user.clubName || user.name,
     };
 
     fetch("http://localhost:8080/api/requests", {
@@ -60,12 +71,21 @@ const BookingPage = () => {
         setDate("");
         setPurpose("");
         setSelectedTime("");
+        setBookedSlots([]);
       })
       .catch((err) => {
         console.error(err);
         alert("Failed to submit booking request.");
       });
   };
+
+  if (!user) {
+    return <div className="text-center text-red-500 text-xl font-semibold mt-10">Please log in to request a room.</div>;
+  }
+
+  if (!room) {
+    return <div className="text-center text-red-500 text-xl font-bold">Error: No room selected for booking.</div>;
+  }
 
   return (
     <div className="p-6 bg-gray-100 min-h-screen flex flex-col items-center">
@@ -76,13 +96,13 @@ const BookingPage = () => {
           {room.type} • Capacity: {room.capacity}
         </p>
 
-        {/* Booking Form */}
         <div className="mt-6">
           <label className="block text-gray-700">Date</label>
           <input
             type="date"
             className="w-full p-2 border rounded-lg"
             value={date}
+            min={new Date().toISOString().split("T")[0]} // restrict past dates
             onChange={(e) => setDate(e.target.value)}
           />
 
@@ -102,13 +122,14 @@ const BookingPage = () => {
                 key={slot}
                 disabled={isBooked(slot)}
                 onClick={() => setSelectedTime(slot)}
-                className={`p-2 rounded-lg text-white ${
+                className={`p-2 rounded-lg text-white transition ${
                   isBooked(slot)
-                    ? "bg-red-500 cursor-not-allowed"
+                    ? "bg-red-400 cursor-not-allowed"
                     : selectedTime === slot
                     ? "bg-purple-600"
-                    : "bg-green-500"
+                    : "bg-green-500 hover:bg-green-600"
                 }`}
+                title={isBooked(slot) ? "This time slot is already booked." : "Click to select"}
               >
                 {isBooked(slot) ? `${slot} (Booked)` : slot}
               </button>

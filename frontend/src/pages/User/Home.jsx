@@ -5,21 +5,24 @@ const Home = () => {
   const [places, setPlaces] = useState([]);
 
   useEffect(() => {
-    fetch("http://localhost:8080/api/requests/frequently-booked") // Fetch frequently booked places
-      .then((res) => res.json())
+    fetch("http://localhost:8080/api/requests/frequently-booked")
+      .then((res) => {
+        if (!res.ok) throw new Error("Failed to fetch places");
+        return res.json();
+      })
       .then((data) => {
-        // Transform data into required format (adding image URLs based on room names)
-        const transformedData = data.map((place) => ({
-          id: place.id,
-          name: place.roomName, // Assuming roomName is in the request object
-          img: getImageForPlace(place.roomName),
+        const transformedData = data.map((room) => ({
+          id: room.id,
+          name: room.name,
+          capacity: room.capacity,
+          type: room.type,
+          img: getImageForPlace(room.name),
         }));
         setPlaces(transformedData);
       })
       .catch((err) => console.error("Error fetching places:", err));
   }, []);
 
-  // Function to assign images dynamically (modify as needed)
   const getImageForPlace = (placeName) => {
     const images = {
       "A3-010": "/assets/classroom.jpg",
@@ -27,7 +30,7 @@ const Home = () => {
       Backyard: "/assets/backyard.jpg",
       "Library Hall": "/assets/library.jpg",
     };
-    return images[placeName] || "/assets/default.jpg"; // Default if no image found
+    return images[placeName] || "/assets/default.jpg";
   };
 
   return (
@@ -35,7 +38,13 @@ const Home = () => {
       <h2 className="text-2xl font-semibold mb-4">Frequently Booked Places</h2>
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         {places.map((place) => (
-          <Card key={place.id} name={place.name} img={place.img} />
+          <Card
+            key={place.id}
+            name={place.name}
+            img={place.img}
+            capacity={place.capacity}
+            type={place.type}
+          />
         ))}
       </div>
     </div>

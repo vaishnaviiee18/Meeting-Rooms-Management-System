@@ -1,4 +1,4 @@
-import { BrowserRouter as Router } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { useState } from "react";
 import Navbar from "./components/Navbar";
 import AdminNavbar from "./components/AdminNavbar";
@@ -11,20 +11,26 @@ function App() {
 
   return (
     <Router>
-      {/* Show different navbar based on user role */}
-      {userRole === "admin" ? (
+      {/* Show the appropriate navbar based on the current path */}
+      {window.location.pathname.startsWith("/admin") ? (
         <AdminNavbar />
       ) : (
         <Navbar isLoggedIn={isLoggedIn} setIsLoggedIn={setIsLoggedIn} />
       )}
 
       <div className="p-6 min-h-screen bg-gray-50">
-        {/* Render routes based on user role */}
-        {userRole === "admin" && isLoggedIn ? (
-          <AdminRoutes />
-        ) : (
-          <UserRoutes setIsLoggedIn={setIsLoggedIn} setUserRole={setUserRole} />
-        )}
+        <Routes>
+          <Route path="/admin/*" element={<AdminRoutes />} />
+          <Route
+            path="/*"
+            element={
+              <UserRoutes
+                setIsLoggedIn={setIsLoggedIn}
+                setUserRole={setUserRole}
+              />
+            }
+          />
+        </Routes>
       </div>
     </Router>
   );

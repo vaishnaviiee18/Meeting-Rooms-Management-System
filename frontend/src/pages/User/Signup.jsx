@@ -10,7 +10,7 @@ const Signup = () => {
   const navigate = useNavigate();
 
   const handleSignup = async () => {
-    if (!email || !password) {
+    if (!email || !password || (role === "Club representative" && !club)) {
       alert("Please fill in all required fields.");
       return;
     }
@@ -35,7 +35,8 @@ const Signup = () => {
         alert(`${role} account created!`);
         navigate("/login");
       } else {
-        alert("Signup failed. Please try again.");
+        const data = await res.json();
+        alert(`Signup failed: ${data.message || "Please try again."}`);
       }
     } catch (error) {
       console.error(error);
@@ -59,6 +60,7 @@ const Signup = () => {
         </select>
 
         <input
+          type="email"
           className="w-full p-2 mt-2 border rounded"
           placeholder="Email"
           value={email}
@@ -66,8 +68,8 @@ const Signup = () => {
         />
 
         <input
-          className="w-full p-2 mt-2 border rounded"
           type="password"
+          className="w-full p-2 mt-2 border rounded"
           placeholder="Password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}

@@ -8,10 +8,15 @@ const Requests = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (!user) return;
+    if (!user || (!user.clubName && !user.name)) return;
 
-    fetch(`http://localhost:8080/api/requests/club/${user.clubName || user.name}`)
-      .then((res) => res.json())
+    const clubIdentifier = encodeURIComponent(user.clubName || user.name);
+
+    fetch(`http://localhost:8080/api/requests/club/${clubIdentifier}`)
+      .then((res) => {
+        if (!res.ok) throw new Error("Failed to fetch club requests");
+        return res.json();
+      })
       .then((data) => setRequests(data))
       .catch((err) => console.error("Error fetching requests:", err));
   }, [user]);
@@ -34,13 +39,15 @@ const Requests = () => {
           requests.map((req) => (
             <div key={req.id} className="bg-white p-4 rounded-lg shadow border">
               <h3 className="font-bold text-lg">{req.roomName}</h3>
-              <p className="text-gray-600">Date: {req.date}</p>
+              <p className="text-gray-600">Date: {req.bookingDate}</p>
+              <p className="text-gray-600">Time Slot: {req.timeSlot}</p>
+              <p className="text-gray-600">Purpose: {req.purpose || "N/A"}</p>
               <p className="text-gray-600">Club: {req.clubName}</p>
               <p
                 className={`font-semibold ${
-                  req.status === "Granted"
+                  req.status.toLowerCase() === "granted"
                     ? "text-green-600"
-                    : req.status === "Rejected"
+                    : req.status.toLowerCase() === "rejected"
                     ? "text-red-600"
                     : "text-yellow-500"
                 }`}
@@ -48,7 +55,7 @@ const Requests = () => {
                 Status: {req.status}
               </p>
 
-              {req.status === "Granted" && (
+              {req.status.toLowerCase() === "granted" && (
                 <button
                   onClick={() => navigate(`/view-letter/${req.id}`)}
                   className="mt-3 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"

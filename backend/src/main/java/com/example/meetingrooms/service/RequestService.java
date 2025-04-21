@@ -3,6 +3,7 @@ package com.example.meetingrooms.service;
 import com.example.meetingrooms.model.Request;
 import com.example.meetingrooms.model.Room;
 import com.example.meetingrooms.repository.RequestRepository;
+import com.example.meetingrooms.repository.RoomRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -16,7 +17,8 @@ public class RequestService {
     @Autowired
     private RequestRepository requestRepository;
 
-    // Removed unused RoomRepository
+    @Autowired
+    private RoomRepository roomRepository;
 
     public List<Request> getAllRequests() {
         return requestRepository.findAll();

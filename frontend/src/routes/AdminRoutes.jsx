@@ -6,11 +6,11 @@ import AllClubs from "../pages/Admin/AllClubs";
 const AdminRoutes = () => {
   return (
     <Routes>
-      <Route path="/admin/home" element={<AdminHome />} />
-      <Route path="/admin/requests" element={<AllRequests />} />
-      <Route path="/admin/clubs" element={<AllClubs />} />
+      <Route path="home" element={<AdminHome />} />
+      <Route path="requests" element={<AllRequests />} />
+      <Route path="clubs" element={<AllClubs />} />
       {/* Redirect unknown admin routes to the home page */}
-      <Route path="/admin/*" element={<Navigate to="/admin/home" />} />
+      <Route path="*" element={<Navigate to="/admin/home" />} />
     </Routes>
   );
 };

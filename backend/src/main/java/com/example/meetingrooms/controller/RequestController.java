@@ -59,21 +59,24 @@ public class RequestController {
 
     // Create a new request
     @PostMapping
-    public ResponseEntity<Request> createRequest(@RequestBody Request request) {
-        String userClubName = "MockClub"; // Replace with actual logic later
+public ResponseEntity<Request> createRequest(@RequestBody Request request) {
+    String userClubName = "MockClub"; // Replace with actual logic later
 
-        request.setClubName(userClubName);
-        request.setStatus(RequestStatus.PENDING);
+    request.setClubName(userClubName);
+    request.setStatus(RequestStatus.PENDING);
 
-        if (request.getRoom() != null && request.getRoom().getName() != null) {
-            Room room = roomRepository.findByName(request.getRoom().getName())
-                    .orElseThrow(() -> new RuntimeException("Room not found"));
-            request.setRoom(room);
-        }
-
-        Request created = requestService.createRequest(request);
-        return ResponseEntity.ok(created);
+    if (request.getRoom() != null && request.getRoom().getName() != null) {
+        Room room = roomRepository.findByName(request.getRoom().getName())
+                .orElseThrow(() -> new RuntimeException("Room not found"));
+        request.setRoom(room);
+    } else {
+        throw new RuntimeException("Room information is required");
     }
+
+    Request created = requestService.createRequest(request);
+    return ResponseEntity.ok(created);
+}
+
 
     // Update an existing request
     @PutMapping("/{id}")
