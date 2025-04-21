@@ -1,25 +1,27 @@
 package com.example.meetingrooms.controller;
 
 import com.example.meetingrooms.model.Request;
-import com.example.meetingrooms.model.Room;
-import com.example.meetingrooms.service.RequestService;
-import com.example.meetingrooms.repository.RoomRepository;
 import com.example.meetingrooms.model.RequestStatus;
+import com.example.meetingrooms.model.Room;
 import com.example.meetingrooms.model.User;
-
+import com.example.meetingrooms.repository.RoomRepository;
+import com.example.meetingrooms.repository.UserRepository;
+import com.example.meetingrooms.service.RequestService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import java.util.stream.Collectors;
 
 import java.time.LocalDate;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/requests")
-@CrossOrigin(origins = "http://localhost:5173")
+@CrossOrigin(origins = "*")
 public class RequestController {
 
     @Autowired
@@ -28,20 +30,18 @@ public class RequestController {
     @Autowired
     private RoomRepository roomRepository;
 
+    @Autowired
+    private UserRepository userRepository;
+
     // Get requests by room and date
-    @GetMapping("/room/{roomName}/date/{date}")
-    public ResponseEntity<List<Request>> getRequestsByRoomAndDate(
-            @PathVariable String roomName,
-            @PathVariable @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
-
-        List<Request> requests = requestService.getRequestsByRoomNameAndDate(roomName, date);
-
-        if (requests.isEmpty()) {
-            return ResponseEntity.notFound().build();
-        } else {
-            return ResponseEntity.ok(requests);
-        }
-    }
+//    @GetMapping("/room/{roomName}/date/{date}")
+//    public ResponseEntity<List<Request>> getRequestsByRoomAndDate(
+//            @PathVariable String roomName,
+//            @PathVariable @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
+//
+//        List<Request> requests = requestService.getRequestsByRoomNameAndDate(roomName, date);
+//        return ResponseEntity.ok(requests);
+//    }
 
     // Get all requests
     @GetMapping
@@ -59,81 +59,86 @@ public class RequestController {
 
     // Create a new request
     @PostMapping
-public ResponseEntity<Request> createRequest(@RequestBody Request request) {
-    String userClubName = "MockClub"; // Replace with actual logic later
+    public ResponseEntity<?> createRequest(@RequestBody Map<String, Object> requestData) {
+        try {
 
-    request.setClubName(userClubName);
-    request.setStatus(RequestStatus.PENDING);
+            String purpose = (String) requestData.get("purpose");
+            String timeSlot = (String) requestData.get("timeSlot");
+            LocalDate bookingDate = LocalDate.parse((String) requestData.get("bookingDate"));
+            String clubName = (String) requestData.get("clubName");
+            String userEmail = (String) requestData.get("userEmail");
 
-    if (request.getRoom() != null && request.getRoom().getName() != null) {
-        Room room = roomRepository.findByName(request.getRoom().getName())
-                .orElseThrow(() -> new RuntimeException("Room not found"));
-        request.setRoom(room);
-    } else {
-        throw new RuntimeException("Room information is required");
-    }
+            if (userEmail == null || userEmail.isEmpty()) {
+                Map<String, String> errorResponse = new HashMap<>();
+                errorResponse.put("error", "User email is required");
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
+            }
 
-    Request created = requestService.createRequest(request);
-    return ResponseEntity.ok(created);
-}
+            Map<String, Object> roomMap = (Map<String, Object>) requestData.get("room");
+            String roomName = (String) roomMap.get("name");
+            Long roomId = null;
+            if (roomMap.containsKey("id")) {
+                if (roomMap.get("id") instanceof Integer) {
+                    roomId = Long.valueOf((Integer) roomMap.get("id"));
+                } else if (roomMap.get("id") instanceof Long) {
+                    roomId = (Long) roomMap.get("id");
+                }
+            }
 
+            Room room = null;
+            if (roomId != null) {
+                Optional<Room> roomById = roomRepository.findById(roomId);
+                if (roomById.isPresent()) {
+                    room = roomById.get();
+                }
+            }
 
-    // Update an existing request
-    @PutMapping("/{id}")
-    public ResponseEntity<Request> updateRequest(@PathVariable Long id, @RequestBody Request updatedRequest) {
-        Request result = requestService.updateRequest(id, updatedRequest);
-        return result != null ? ResponseEntity.ok(result) : ResponseEntity.notFound().build();
-    }
+            if (room == null && roomName != null) {
+                Optional<Room> roomByName = roomRepository.findByName(roomName);
+                if (roomByName.isPresent()) {
+                    room = roomByName.get();
+                }
+            }
 
-    // Delete a request by ID
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteRequest(@PathVariable Long id) {
-        requestService.deleteRequest(id);
-        return ResponseEntity.noContent().build();
-    }
+            if (room == null) {
+                Map<String, String> errorResponse = new HashMap<>();
+                errorResponse.put("error", "Room not found: " + roomName);
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
+            }
 
-    // Generate letter for an approved request
-    @GetMapping("/{id}/generate-letter")
-    public ResponseEntity<String> generateLetter(@PathVariable Long id) {
-        Optional<Request> optionalRequest = requestService.getRequestById(id);
-        if (optionalRequest.isEmpty()) return ResponseEntity.notFound().build();
+            Optional<User> userOptional = userRepository.findByEmail(userEmail);
+            User user = userOptional.orElse(null);
 
-        Request request = optionalRequest.get();
+            Request request = new Request();
+            request.setPurpose(purpose);
+            request.setTimeSlot(timeSlot);
+            request.setBookingDate(bookingDate);
+            request.setClubName(clubName);
+            request.setRoom(room);
+            request.setUser(user);
+            request.setUserEmail(userEmail);
+            request.setStatus(RequestStatus.PENDING);
 
-        if (request.getStatus() != RequestStatus.APPROVED) {
-            return ResponseEntity.badRequest().body("This request has not been approved yet.");
+            Request created = requestService.createRequest(request);
+            return ResponseEntity.ok(created);
+        } catch (Exception e) {
+            Map<String, String> errorResponse = new HashMap<>();
+            errorResponse.put("error", "Failed to create request: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
         }
-
-        String letterContent = generateLetterContent(request);
-        return ResponseEntity.ok(letterContent);
     }
 
-    // Get frequently booked rooms
-    @GetMapping("/frequently-booked")
-    public ResponseEntity<List<Room>> getFrequentlyBookedRooms() {
-        return ResponseEntity.ok(requestService.getFrequentlyBookedRooms());
+    // Add this method to your existing RequestController class
+
+    // Get requests by user email (for the logged-in user)
+    @GetMapping("/user-email/{email}")
+    public ResponseEntity<List<Request>> getRequestsByUserEmail(@PathVariable String email) {
+        try {
+            List<Request> requests = requestService.getRequestsByUserEmail(email);
+            return ResponseEntity.ok(requests);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
+        }
     }
 
-    // Get requests by club identifier
-    @GetMapping("/club/{clubIdentifier}")
-    public ResponseEntity<List<Request>> getRequestsByClub(@PathVariable String clubIdentifier) {
-        List<Request> filteredRequests = requestService.getAllRequests().stream()
-                .filter(request -> {
-                    User user = request.getUserEntity();
-                    return user != null &&
-                            (clubIdentifier.equalsIgnoreCase(user.getClub()) ||
-                             clubIdentifier.equalsIgnoreCase(user.getFullName()));
-                })
-                .collect(Collectors.toList());
-
-        return ResponseEntity.ok(filteredRequests);
-    }
-
-    private String generateLetterContent(Request request) {
-        return "<h2>Room Booking Confirmation</h2>" +
-                "<p>The room <strong>" + request.getRoom().getName() + "</strong> is assigned to <strong>" +
-                request.getUserEntity().getClub() + "</strong> for the time slot <strong>" +
-                request.getTimeSlot() + "</strong> on <strong>" + request.getBookingDate() + "</strong>.</p>" +
-                "<p>Thank you for using our booking system.</p>";
-    }
 }

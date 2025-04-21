@@ -6,7 +6,8 @@ import Signup from "../pages/User/Signup";
 import AboutUs from "../pages/User/AboutUs";
 import Rooms from "../pages/User/Rooms";
 import BookingPage from "../pages/User/BookingPage";
-import LetterPage from "../pages/User/LetterPage"; 
+import LetterPage from "../pages/User/LetterPage";
+import MyBookings from "../pages/User/MyBookings.jsx";
 
 const UserRoutes = ({ setIsLoggedIn, setUserRole }) => {
   return (
@@ -18,6 +19,7 @@ const UserRoutes = ({ setIsLoggedIn, setUserRole }) => {
       <Route path="/about" element={<AboutUs />} />
       <Route path="/rooms" element={<Rooms />} />
       <Route path="/book-room" element={<BookingPage />} />
+        <Route path="/my-bookings" element={<MyBookings />} />
 
       {/* ✅ Route for viewing the letter */}
       <Route path="/view-letter/:id" element={<LetterPage />} />

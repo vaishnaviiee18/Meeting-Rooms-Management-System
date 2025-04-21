@@ -15,6 +15,8 @@ const Navbar = ({ isLoggedIn, setIsLoggedIn }) => {
         <Link to="/rooms" className="hover:underline">Rooms</Link>
         <Link to="/requests" className="hover:underline">Requests</Link>
         <Link to="/about" className="hover:underline">About</Link>
+          <Link to="/my-bookings" className="hover:underline">My Bookings</Link>
+
       </div>
       <div className="relative">
         <button onClick={() => setDropdownOpen(!dropdownOpen)} className="flex items-center">

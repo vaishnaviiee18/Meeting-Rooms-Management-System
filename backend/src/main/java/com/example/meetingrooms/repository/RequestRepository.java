@@ -20,4 +20,9 @@ public interface RequestRepository extends JpaRepository<Request, Long> {
 
     @Query("SELECT req FROM Request req WHERE req.room.name = :roomName AND req.bookingDate = :bookingDate")
     List<Request> findByRoomNameAndBookingDate(String roomName, LocalDate bookingDate);
+
+    List<Request> findByUserEmail(String email);
+    List<Request> findByRoom_NameAndBookingDate(String roomName, LocalDate bookingDate);
+    List<Request> findByUser_Id(Long userId);
+    List<Request> findByClubName(String clubName);
 }
