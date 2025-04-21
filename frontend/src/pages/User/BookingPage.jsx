@@ -49,7 +49,9 @@ const BookingPage = () => {
     }
 
     const bookingRequest = {
-      roomName: room.name,
+      room: {
+        name: room.name
+      },
       bookingDate: date,
       timeSlot: selectedTime,
       purpose,
