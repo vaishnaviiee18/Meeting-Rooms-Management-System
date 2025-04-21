@@ -1,16 +1,15 @@
 package com.example.meetingrooms.repository;
 
+import com.example.meetingrooms.model.User;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+
 import java.util.Optional;
 
-import org.springframework.data.jpa.repository.JpaRepository;
-
-import com.example.meetingrooms.model.User;
-
+@Repository
 public interface UserRepository extends JpaRepository<User, Long> {
-    
-    // ✅ Used for login
-    Optional<User> findByEmail(String email);
 
-    // ✅ Useful to check during signup if a user already exists
-    boolean existsByEmail(String email);
+    Optional<User> findByEmail(String email); // Login, fetching, validation
+
+    boolean existsByEmail(String email); // Signup validation
 }

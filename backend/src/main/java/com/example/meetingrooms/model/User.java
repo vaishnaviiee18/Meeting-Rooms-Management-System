@@ -1,16 +1,11 @@
 package com.example.meetingrooms.model;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 
 @Entity
 @Table(name = "users")
 public class User {
-    
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -26,6 +21,17 @@ public class User {
 
     @Column(nullable = true)
     private String club; // Nullable for Admin
+
+    // Constructors
+    public User() {
+    }
+
+    public User(String email, String password, String role, String club) {
+        this.email = email;
+        this.password = password;
+        this.role = role;
+        this.club = club;
+    }
 
     // Getters and Setters
     public Long getId() {
@@ -66,5 +72,20 @@ public class User {
 
     public void setClub(String club) {
         this.club = club;
+    }
+
+    // ✅ Add this method to avoid "method does not exist" error
+    public String getFullName() {
+        return email; // You can change this to a full name field if you add one later
+    }
+
+    @Override
+    public String toString() {
+        return "User{" +
+               "id=" + id +
+               ", email='" + email + '\'' +
+               ", role='" + role + '\'' +
+               ", club='" + club + '\'' +
+               '}';
     }
 }

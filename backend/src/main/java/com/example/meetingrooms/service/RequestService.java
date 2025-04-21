@@ -1,20 +1,22 @@
 package com.example.meetingrooms.service;
 
-import java.util.List;
-import java.util.Optional;
-
+import com.example.meetingrooms.model.Request;
+import com.example.meetingrooms.model.Room;
+import com.example.meetingrooms.repository.RequestRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import com.example.meetingrooms.model.Request;
-import com.example.meetingrooms.model.RequestStatus;
-import com.example.meetingrooms.repository.RequestRepository;
+import java.time.LocalDate;
+import java.util.List;
+import java.util.Optional;
 
 @Service
 public class RequestService {
 
     @Autowired
     private RequestRepository requestRepository;
+
+    // Removed unused RoomRepository
 
     public List<Request> getAllRequests() {
         return requestRepository.findAll();
@@ -29,20 +31,30 @@ public class RequestService {
     }
 
     public Request updateRequest(Long id, Request updatedRequest) {
-        return requestRepository.findById(id).map(request -> {
-            request.setRoomName(updatedRequest.getRoomName());
-            request.setUser(updatedRequest.getUser());
+        Optional<Request> existingRequest = getRequestById(id);
+        if (existingRequest.isPresent()) {
+            Request request = existingRequest.get();
+            request.setRoom(updatedRequest.getRoom());
+            request.setPurpose(updatedRequest.getPurpose());
             request.setTimeSlot(updatedRequest.getTimeSlot());
+            request.setBookingDate(updatedRequest.getBookingDate());
             request.setStatus(updatedRequest.getStatus());
+            request.setClubName(updatedRequest.getClubName());
+            request.setUserEntity(updatedRequest.getUserEntity());
             return requestRepository.save(request);
-        }).orElse(null);
+        }
+        return null;
     }
 
     public void deleteRequest(Long id) {
         requestRepository.deleteById(id);
     }
 
-    public List<Request> getRequestsByStatus(RequestStatus status) {
-        return requestRepository.findByStatus(status.toString());
+    public List<Room> getFrequentlyBookedRooms() {
+        return requestRepository.findFrequentlyBookedRooms();
+    }
+
+    public List<Request> getRequestsByRoomNameAndDate(String roomName, LocalDate date) {
+        return requestRepository.findByRoomNameAndBookingDate(roomName, date);
     }
 }

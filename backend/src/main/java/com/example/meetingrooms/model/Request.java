@@ -1,76 +1,80 @@
 package com.example.meetingrooms.model;
 
+import jakarta.persistence.*;
 import java.time.LocalDate;
-
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
+import java.time.LocalDateTime;
 
 @Entity
+@Table(name = "requests")
 public class Request {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private String roomName;
-    private String user;
-    private String timeSlot;
+    @Column(nullable = false)
+    private String purpose;
 
     @Enumerated(EnumType.STRING)
-    private RequestStatus status;
+    @Column(nullable = false, columnDefinition = "ENUM('APPROVED', 'DENIED', 'PENDING') DEFAULT 'PENDING'")
+    private RequestStatus status = RequestStatus.PENDING;
 
-    // Getters
-    public Long getId() {
-        return id;
-    }
+    @Column(name = "time_slot", nullable = false)
+    private String timeSlot;
 
-    public String getRoomName() {
-        return roomName;
-    }
-
-    public String getUser() {
-        return user;
-    }
-
-    public String getTimeSlot() {
-        return timeSlot;
-    }
-
-    public RequestStatus getStatus() {
-        return status;
-    }
+    @Column(name = "booking_date", nullable = false)
     private LocalDate bookingDate;
 
-    public LocalDate getBookingDate() {
-        return bookingDate;
-    }
+    @Column(name = "club_name", nullable = true)
+    private String clubName;
 
-    public void setBookingDate(LocalDate bookingDate) {
-        this.bookingDate = bookingDate;
-    }
+    @Column(name = "user", nullable = false)
+    private String user;
 
-    // Setters
-    public void setId(Long id) {
-        this.id = id;
-    }
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = false)
+    private User userEntity;
 
-    public void setRoomName(String roomName) {
-        this.roomName = roomName;
-    }
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "room_id", nullable = false)
+    private Room room;
 
-    public void setUser(String user) {
-        this.user = user;
-    }
+    @Column(name = "created_at", updatable = false, insertable = false, columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
+    private LocalDateTime createdAt;
 
-    public void setTimeSlot(String timeSlot) {
-        this.timeSlot = timeSlot;
-    }
+    @Column(name = "updated_at", insertable = false, columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP")
+    private LocalDateTime updatedAt;
 
-    public void setStatus(RequestStatus status) {
-        this.status = status;
-    }
+    // Getters and Setters...
+
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+
+    public String getPurpose() { return purpose; }
+    public void setPurpose(String purpose) { this.purpose = purpose; }
+
+    public RequestStatus getStatus() { return status; }
+    public void setStatus(RequestStatus status) { this.status = status; }
+
+    public String getTimeSlot() { return timeSlot; }
+    public void setTimeSlot(String timeSlot) { this.timeSlot = timeSlot; }
+
+    public LocalDate getBookingDate() { return bookingDate; }
+    public void setBookingDate(LocalDate bookingDate) { this.bookingDate = bookingDate; }
+
+    public String getClubName() { return clubName; }
+    public void setClubName(String clubName) { this.clubName = clubName; }
+
+    public String getUser() { return user; }
+    public void setUser(String user) { this.user = user; }
+
+    public User getUserEntity() { return userEntity; }
+    public void setUserEntity(User userEntity) { this.userEntity = userEntity; }
+
+    public Room getRoom() { return room; }
+    public void setRoom(Room room) { this.room = room; }
+
+    public LocalDateTime getCreatedAt() { return createdAt; }
+
+    public LocalDateTime getUpdatedAt() { return updatedAt; }
 }

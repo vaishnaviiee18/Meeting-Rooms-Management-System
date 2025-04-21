@@ -1,25 +1,21 @@
 package com.example.meetingrooms.controller;
 
-import java.util.List;
-import java.util.Optional;
+import com.example.meetingrooms.model.Request;
+import com.example.meetingrooms.model.Room;
+import com.example.meetingrooms.service.RequestService;
+import com.example.meetingrooms.repository.RoomRepository;
+import com.example.meetingrooms.model.RequestStatus;
+import com.example.meetingrooms.model.User;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+import java.util.stream.Collectors;
 
-import com.example.meetingrooms.model.Request;
-import com.example.meetingrooms.model.RequestStatus;
-import com.example.meetingrooms.service.RequestService;
+import java.time.LocalDate;
+import java.util.List;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/requests")
@@ -29,14 +25,31 @@ public class RequestController {
     @Autowired
     private RequestService requestService;
 
+    @Autowired
+    private RoomRepository roomRepository;
 
-    // Fetch all requests
+    // Get requests by room and date
+    @GetMapping("/room/{roomName}/date/{date}")
+    public ResponseEntity<List<Request>> getRequestsByRoomAndDate(
+            @PathVariable String roomName,
+            @PathVariable @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
+
+        List<Request> requests = requestService.getRequestsByRoomNameAndDate(roomName, date);
+
+        if (requests.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        } else {
+            return ResponseEntity.ok(requests);
+        }
+    }
+
+    // Get all requests
     @GetMapping
     public ResponseEntity<List<Request>> getAllRequests() {
         return ResponseEntity.ok(requestService.getAllRequests());
     }
 
-    // Fetch a request by ID
+    // Get a request by ID
     @GetMapping("/{id}")
     public ResponseEntity<Request> getRequestById(@PathVariable Long id) {
         return requestService.getRequestById(id)
@@ -47,11 +60,22 @@ public class RequestController {
     // Create a new request
     @PostMapping
     public ResponseEntity<Request> createRequest(@RequestBody Request request) {
+        String userClubName = "MockClub"; // Replace with actual logic later
+
+        request.setClubName(userClubName);
+        request.setStatus(RequestStatus.PENDING);
+
+        if (request.getRoom() != null && request.getRoom().getName() != null) {
+            Room room = roomRepository.findByName(request.getRoom().getName())
+                    .orElseThrow(() -> new RuntimeException("Room not found"));
+            request.setRoom(room);
+        }
+
         Request created = requestService.createRequest(request);
         return ResponseEntity.ok(created);
     }
 
-    // Update an existing request by ID
+    // Update an existing request
     @PutMapping("/{id}")
     public ResponseEntity<Request> updateRequest(@PathVariable Long id, @RequestBody Request updatedRequest) {
         Request result = requestService.updateRequest(id, updatedRequest);
@@ -65,42 +89,47 @@ public class RequestController {
         return ResponseEntity.noContent().build();
     }
 
-    // New endpoint for letter generation
+    // Generate letter for an approved request
     @GetMapping("/{id}/generate-letter")
     public ResponseEntity<String> generateLetter(@PathVariable Long id) {
         Optional<Request> optionalRequest = requestService.getRequestById(id);
-
-        // Check if the request exists
-        if (optionalRequest.isEmpty()) {
-            return ResponseEntity.notFound().build();
-        }
+        if (optionalRequest.isEmpty()) return ResponseEntity.notFound().build();
 
         Request request = optionalRequest.get();
 
-        // Check if the request status is APPROVED
         if (request.getStatus() != RequestStatus.APPROVED) {
             return ResponseEntity.badRequest().body("This request has not been approved yet.");
         }
 
-        // Fetch the current authenticated user
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        String currentUsername = authentication.getName(); // Assuming the username is the representative's email or ID
-
-        // Check if the current user is the representative of the club
-        if (!currentUsername.equals(request.getUser())) {
-            return ResponseEntity.status(403).body("You are not authorized to generate a letter for this request.");
-        }
-
-        // Generate and return the letter content
         String letterContent = generateLetterContent(request);
         return ResponseEntity.ok(letterContent);
     }
 
+    // Get frequently booked rooms
+    @GetMapping("/frequently-booked")
+    public ResponseEntity<List<Room>> getFrequentlyBookedRooms() {
+        return ResponseEntity.ok(requestService.getFrequentlyBookedRooms());
+    }
+
+    // Get requests by club identifier
+    @GetMapping("/club/{clubIdentifier}")
+    public ResponseEntity<List<Request>> getRequestsByClub(@PathVariable String clubIdentifier) {
+        List<Request> filteredRequests = requestService.getAllRequests().stream()
+                .filter(request -> {
+                    User user = request.getUserEntity();
+                    return user != null &&
+                            (clubIdentifier.equalsIgnoreCase(user.getClub()) ||
+                             clubIdentifier.equalsIgnoreCase(user.getFullName()));
+                })
+                .collect(Collectors.toList());
+
+        return ResponseEntity.ok(filteredRequests);
+    }
+
     private String generateLetterContent(Request request) {
-        // Example of the letter content, this can be styled and formatted according to your requirements
         return "<h2>Room Booking Confirmation</h2>" +
-                "<p>The room <strong>" + request.getRoomName() + "</strong> is assigned to the <strong>" +
-                request.getUser() + "</strong> for the time slot <strong>" +
+                "<p>The room <strong>" + request.getRoom().getName() + "</strong> is assigned to <strong>" +
+                request.getUserEntity().getClub() + "</strong> for the time slot <strong>" +
                 request.getTimeSlot() + "</strong> on <strong>" + request.getBookingDate() + "</strong>.</p>" +
                 "<p>Thank you for using our booking system.</p>";
     }
